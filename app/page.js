@@ -1,11 +1,11 @@
 'use client'
-import { Box, Button, Stack, TextField } from "@mui/material";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useState } from 'react';
 
 export default function Home() {
   const [messages, setMessages] = useState([{
     role: 'assistant',
-    content: "Hi, I'm the Support Agent. How may I assist you today?"
+    content: "Hi, I'm an AI ready to help you with anything you need. How may I assist you today?"
   }]);
 
   const [message, setMessage] = useState('');
@@ -14,7 +14,7 @@ export default function Home() {
     setMessages((messages) => [
       ...messages,
       { role: "user", content: message },
-      { role: "assistant", content: "..." },  // Temporary placeholder
+      { role: "assistant", content: "Hold on, thinking..." },  // Temporary placeholder
     ]);
 
     const response = await fetch('/api/chat', {
@@ -43,6 +43,10 @@ export default function Home() {
       alignItems="center"
       bgcolor="#2e2e2e"  // Dark gray background
     >
+      {/* Title at the top */}
+      <Typography variant="h4" color="white" gutterBottom>
+        Chat Support Interface
+      </Typography>
       <Stack
         direction="column"
         width="600px"
@@ -50,8 +54,8 @@ export default function Home() {
         border="1px solid black"
         p={2}
         spacing={3}
-        bgcolor="white"  // White background for the chat box
-        borderRadius={2}  // Slight rounding of corners
+        bgcolor="white"
+        borderRadius={2}
       >
         <Stack
           direction="column"
@@ -77,9 +81,8 @@ export default function Home() {
                 color="white"
                 borderRadius={16}
                 p={3}
-              >
-                {message.content}
-              </Box>
+                dangerouslySetInnerHTML={{ __html: message.content }}
+              />
             </Box>
           ))}
         </Stack>
