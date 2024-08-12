@@ -1,6 +1,6 @@
 'use client'
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
   const [messages, setMessages] = useState([{
@@ -9,12 +9,14 @@ export default function Home() {
   }]);
 
   const [message, setMessage] = useState('');
+  const inputRef = useRef(null);
 
+  // Function to format the message, removing asterisks and enhancing readability
   const formatMessage = (text) => {
     if (!text) return ''; 
     return text
-      .replace(/\*/g, '')  
-      .replace(/\n/g, '<br/>') 
+      .replace(/\*/g, '')  // Remove all asterisks
+      .replace(/\n/g, '<br/>')  // Replace newlines with HTML line breaks
       .trim();
   };
 
@@ -22,8 +24,10 @@ export default function Home() {
     setMessages((messages) => [
       ...messages,
       { role: "user", content: message },
-      { role: "assistant", content: "Hold on, thinking..." }, 
+      { role: "assistant", content: "Hold on, thinking..." },  // Temporary placeholder
     ]);
+
+    setMessage(''); // Clear the input box after sending the message
 
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -36,90 +40,97 @@ export default function Home() {
     const data = await response.json();
     setMessages((messages) => {
       const updatedMessages = [...messages];
-      updatedMessages[updatedMessages.length - 1].content = formatMessage(data.choices[0].message.content); 
+      updatedMessages[updatedMessages.length - 1].content = formatMessage(data.choices[0].message.content); // Apply formatting here
       return updatedMessages;
     });
   };
 
+  // Handle pressing Enter to send a message
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  useEffect(() => {
+    inputRef.current.focus();
+  }, []);
+
   return (
     <Box
-      minWidth="100vw"
-      minHeight="100vh"
+      width="100vw"
+      height="100vh"
       display="flex"
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      bgcolor="#2e2e2e"  
-      overflow="hidden" 
-      p={2}
-      boxSizing="border-box"
+      bgcolor="#2e2e2e"  // Dark gray background
+      overflow="hidden"  // Prevent dragging to see white background
     >
-      <Box 
-        width="100%" 
-        maxWidth="600px" 
-        height="auto" 
-        bgcolor="#3e3e3e" 
-        borderRadius={2} 
-        p={3}
-        boxShadow="0 0 20px rgba(0,0,0,0.5)"
+      {/* Title at the top */}
+      <Typography variant="h4" color="white" gutterBottom>
+        Chat Support Interface
+      </Typography>
+      <Stack
+        direction="column"
+        width="100%"
+        maxWidth="600px"  // Ensure the chat box is responsive
+        height="80%"
+        maxHeight="700px"
+        border="1px solid black"
+        p={2}
+        spacing={3}
+        bgcolor="white"
+        borderRadius={2}
+        overflow="hidden"
       >
-        <Typography variant="h4" color="white" gutterBottom align="center">
-          Chat Support Interface
-        </Typography>
         <Stack
           direction="column"
-          width="100%"
-          height="70vh"
-          border="1px solid black"
-          p={2}
-          spacing={3}
-          bgcolor="white"
-          borderRadius={2}
-          overflow="hidden"
+          spacing={2}
+          flexGrow={1}
+          overflow="auto"
+          maxHeight="100%"
         >
-          <Stack
-            direction="column"
-            spacing={2}
-            flexGrow={1}
-            overflow="auto"
-            maxHeight="100%"
-          >
-            {messages.map((message, index) => (
-              <Box 
-                key={index} 
-                display='flex' 
-                justifyContent={
-                  message.role === 'assistant' ? 'flex-start' : 'flex-end'
+          {messages.map((message, index) => (
+            <Box 
+              key={index} 
+              display='flex' 
+              justifyContent={
+                message.role === 'assistant' ? 'flex-start' : 'flex-end'
+              }
+            >
+              <Box
+                bgcolor={
+                  message.role === 'assistant'
+                    ? 'primary.main'
+                    : 'secondary.main'
                 }
-              >
-                <Box
-                  bgcolor={
-                    message.role === 'assistant'
-                      ? 'primary.main'
-                      : 'secondary.main'
-                  }
-                  color="white"  
-                  borderRadius={16}
-                  p={3}
-                  dangerouslySetInnerHTML={{ __html: message.content }}
-                />
-              </Box>
-            ))}
-          </Stack>
-          <Stack 
-            direction="row"
-            spacing={2}
-          >
-            <TextField
-              label="Message"
-              fullWidth
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-            <Button variant="contained" onClick={sendMessage}>Send</Button>
-          </Stack>
+                color="white"  // User text color is white
+                borderRadius={16}
+                p={3}
+                dangerouslySetInnerHTML={{ __html: message.content }}
+              />
+            </Box>
+          ))}
         </Stack>
-      </Box>
+        <Stack 
+          direction="row"
+          spacing={2}
+        >
+          <TextField
+            label="Message"
+            fullWidth
+            multiline
+            maxRows={4}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyPress}  // Handle Enter key
+            inputRef={inputRef}
+          />
+          <Button variant="contained" onClick={sendMessage}>Send</Button>
+        </Stack>
+      </Stack>
     </Box>
   );
 }
